@@ -1,8 +1,12 @@
+#include <at89x51.h>
+#include <serial_IO.h>
+#include <string.h>
+#include <stdint.h>
+
 #include "main.h"
 
-// sdcc main.c -V
-
 InternalCMD cmd_list = { // до 255 команд
+	{ "AT+ECHO", &at_echo },
 	{ "AT+P0", &at_p0 },
 	{ "AT+P3", &at_p3 },
 	{ "AT+P0.0", &at_p0_0 },
@@ -49,8 +53,8 @@ int8_t cmd_handler(char *cmd_buff) {
 	char *cmd = NULL;
 
 	cmd = strtok(cmd_buff, CMD_DELIMITER);
-	for (i = 0; i < (sizeof(cmd_list) / sizeof(cmd_list[0])) 
-		        && cmd != NULL; i++) {
+	for (i = 0; i < (sizeof(cmd_list) / sizeof(cmd_list[0]))
+		&& cmd != NULL; i++) {
 
 		if (strcmp(cmd_list[i].name, cmd) == 0)
 			return (int8_t) cmd_list[i].run(strtok(NULL, CMD_DELIMITER)); // запускаем целевую функцию и отдаем ей аргументы команды
@@ -82,16 +86,13 @@ void main(void) {
 			putchar(g_char);
 
 			if ((g_char == 0x0d) || (g_char == 0x0a)) {
-				putchar(0xd);  // CR (винда!!)
-				putchar(0xa);  // LF
+				putchar(0x0d);  // CR (винда!!)
+				putchar(0x0a);  // LF
 
 				cmd_buff[cmd_index] = 0;
 				cmd_index = 0;
 
 				cmd_res = cmd_handler(cmd_buff);
-
-				if (cmd_res == CMD_ERROR)
-					s_printf("Команда сообщила об ошибке!");
 
 				if (strcmp(cmd_buff, "shell") == 0 && SHELL_STATE == LOW) {
 					SHELL_STATE = HIGH;
@@ -99,6 +100,9 @@ void main(void) {
 				}
 
 				if (SHELL_STATE) {
+					if (cmd_res == CMD_ERROR)
+						s_printf("Команда сообщила об ошибке!");
+
 					if (strcmp(cmd_buff, "help") == 0) {
 						s_printf("  help - показать справку\n");
 						s_printf("  exit - выйти из оболочки\n");
@@ -110,14 +114,25 @@ void main(void) {
 					s_printf(CMD_PROMT_CHAR);
 				}
 			} else if (g_char == 0x7f) { // клавиша "Delete"
-				--cmd_index;
-			} else {
-				cmd_buff[cmd_index] = g_char;
-				if (cmd_index < (MAX_CMD_LINE_BUFF + 1))
-					++cmd_index;
-			}
+			--cmd_index;
+		} else {
+			cmd_buff[cmd_index] = g_char;
+			if (cmd_index < (MAX_CMD_LINE_BUFF + 1))
+				++cmd_index;
 		}
 	}
+}
+}
+
+int8_t at_echo(char *args) {
+	if (args != NULL) {
+		s_printf(args);
+		s_printf("\n");
+	} else {
+		return CMD_ERROR;
+	}
+
+	return CMD_SUCCESS;
 }
 
 int8_t at_p0(char *args) {
@@ -127,8 +142,7 @@ int8_t at_p0(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 = 0x00;
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -141,8 +155,7 @@ int8_t at_p3(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~((1 << 2) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7));
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -155,8 +168,7 @@ int8_t at_p0_0(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 0);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -169,8 +181,7 @@ int8_t at_p0_1(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 1);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -183,8 +194,7 @@ int8_t at_p0_2(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 2);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -197,8 +207,7 @@ int8_t at_p0_3(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 3);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -211,8 +220,7 @@ int8_t at_p0_4(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 4);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -225,8 +233,7 @@ int8_t at_p0_5(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 5);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -239,8 +246,7 @@ int8_t at_p0_6(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 6);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -253,8 +259,7 @@ int8_t at_p0_7(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P0 &= ~(1 << 7);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -267,8 +272,7 @@ int8_t at_p3_2(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~(1 << 2);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -281,8 +285,7 @@ int8_t at_p3_4(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~(1 << 4);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -295,8 +298,7 @@ int8_t at_p3_5(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~(1 << 5);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -309,8 +311,7 @@ int8_t at_p3_6(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~(1 << 6);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;
@@ -323,8 +324,7 @@ int8_t at_p3_7(char *args) {
 		if (strcmp(args, "LOW") == 0)
 			P3 &= ~(1 << 7);
 	} else {
-		if (SHELL_STATE)
-			return CMD_ERROR;
+		return CMD_ERROR;
 	}
 
 	return CMD_SUCCESS;

@@ -1,13 +1,3 @@
-#include <sdcc-lib.h>
-#include <at89x51.h>
-
-#include <serial_IO.h>
-#include <string.h>
-#include <stdint.h>
-
-//#define MICROCONTROLLER_8051
-//#include <mcs51reg.h>
-
 #define MAX_CMD_LINE_BUFF     80
 #define CMD_DELIMITER         "="
 #define CMD_PROMT_CHAR        "> "
@@ -32,7 +22,7 @@ byte cmd_index, last_cmd_index = 0;
 byte cmd_buff[MAX_CMD_LINE_BUFF+1];
 int8_t cmd_res;
 
-bool SHELL_STATE = LOW;
+static bool SHELL_STATE = LOW;
 
 void s_printf(char *str);
 void delay_us(uint16_t us_count);
@@ -46,6 +36,7 @@ typedef const static struct {
 	int8_t (*run)(char *);
 } InternalCMD[];
 
+int8_t at_echo(char *args);
 int8_t at_p0(char *args);
 int8_t at_p3(char *args);
 int8_t at_p0_0(char *args);
